@@ -41,7 +41,7 @@
             position: relative;
             aspect-ratio: 1;
             cursor: pointer;
-            border-radius: 50%; /* 圓形封印 */
+            border-radius: 50%;
             transform-style: preserve-3d;
             transition: transform 0.3s;
         }
@@ -65,7 +65,6 @@
             transition: all 0.3s ease;
         }
         
-        /* 顯示格子上的數字 */
         .poke-paper::after {
             content: attr(data-n);
             font-family: 'Varela Round', sans-serif;
@@ -90,14 +89,12 @@
             z-index: 1;
         }
 
-        /* 破掉的動畫 */
         .broken .poke-paper {
             transform: scale(1.2);
             opacity: 0;
             pointer-events: none;
         }
 
-        /* 內容物 (天使數字) */
         .poke-content {
             opacity: 0;
             transform: scale(0.5);
@@ -135,21 +132,44 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* 音樂提示淡出 */
+        .fade-out {
+            opacity: 0;
+            transition: opacity 1s ease-out;
+            pointer-events: none;
+        }
+
     </style>
 </head>
 <body class="flex justify-center min-h-screen bg-black">
 
+    <!-- 背景音樂 (使用穩定的 Wikimedia Commons 來源: Kevin MacLeod - Windswept) -->
+    <audio id="bg-music" loop>
+        <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/d/d6/Windswept.ogg/Windswept.ogg.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- 主容器 -->
     <div class="w-full max-w-[430px] min-h-screen bg-[#0F0518] shadow-2xl relative flex flex-col">
         
-        <!-- 背景裝飾 (神秘宇宙風) -->
+        <!-- 背景裝飾 -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
-            <!-- 星空 -->
             <div id="stars-container" class="absolute inset-0"></div>
-            <!-- 極光/星雲 -->
             <div class="absolute top-[-20%] left-[-20%] w-[400px] h-[400px] bg-[#4C1D95] rounded-full mix-blend-screen filter blur-[80px] opacity-40"></div>
             <div class="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] bg-[#3B82F6] rounded-full mix-blend-screen filter blur-[60px] opacity-30"></div>
             <div class="absolute top-[40%] left-[30%] w-[200px] h-[200px] bg-[#EC4899] rounded-full mix-blend-screen filter blur-[70px] opacity-20"></div>
+        </div>
+
+        <!-- 音樂提示 (首次進入顯示) -->
+        <div id="music-hint" class="absolute top-16 right-4 z-40 text-xs text-purple-200/70 animate-pulse pointer-events-none">
+            點擊畫面開啟音樂 🎵
+        </div>
+
+        <!-- 音樂與音效開關 -->
+        <div class="absolute top-4 right-4 z-50 flex gap-2">
+            <button id="music-btn" class="p-2 rounded-full bg-white/10 text-purple-200 border border-purple-500/30 hover:bg-white/20 transition-colors shadow-sm cursor-pointer">
+                <i data-lucide="music" class="w-5 h-5 hidden" id="music-icon-on"></i>
+                <i data-lucide="music-2" class="w-5 h-5" id="music-icon-off"></i>
+            </button>
         </div>
 
         <!-- 頂部間距 -->
@@ -164,9 +184,8 @@
                 我的心靈空間斷捨離
             </h1>
             
-            <!-- 天使與指引文字區塊 -->
+            <!-- 天使與指引文字 -->
             <div class="flex items-center justify-center gap-2 mt-1">
-                <!-- 守護天使 SVG -->
                 <div class="w-16 h-16 shrink-0 -mt-2 filter drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">
                    <svg viewBox="0 0 100 100" class="overflow-visible">
                        <defs>
@@ -179,33 +198,16 @@
                                 <stop offset="100%" stop-color="#E9D5FF" />
                            </linearGradient>
                        </defs>
-                       
-                       <!-- 守護光盾 (背景光) -->
                        <circle cx="50" cy="50" r="45" fill="rgba(255,255,255,0.08)" stroke="rgba(252, 211, 77, 0.4)" stroke-width="1.5" stroke-dasharray="4 2" filter="url(#glow-shield)" />
-
-                       <!-- 翅膀 (更寬大，守護姿態) -->
                        <path d="M15 40 Q 5 20, 25 50 Q 35 55, 45 45" fill="url(#wingGrad)" stroke="#C084FC" stroke-width="1"/>
                        <path d="M85 40 Q 95 20, 75 50 Q 65 55, 55 45" fill="url(#wingGrad)" stroke="#C084FC" stroke-width="1"/>
-
-                       <!-- 身體 -->
                        <path d="M35 55 Q 30 90, 20 95 L 80 95 Q 70 90, 65 55 Z" fill="#F3E8FF" />
-                       
-                       <!-- 頭部 -->
                        <circle cx="50" cy="38" r="16" fill="#FFE4C4" />
-                       
-                       <!-- 頭髮 (金色長髮) -->
                        <path d="M34 38 Q 50 10, 66 38 L 66 55 Q 50 45, 34 55 Z" fill="#FCD34D" />
-                       
-                       <!-- 光環 -->
                        <ellipse cx="50" cy="18" rx="14" ry="4" fill="none" stroke="#FCD34D" stroke-width="2.5" />
-                       
-                       <!-- 眼睛 (閉眼安詳) -->
                        <path d="M44 40 Q 46 42, 48 40" fill="none" stroke="#92400E" stroke-width="1.5" stroke-linecap="round"/>
                        <path d="M52 40 Q 54 42, 56 40" fill="none" stroke="#92400E" stroke-width="1.5" stroke-linecap="round"/>
-                       
-                       <!-- 雙手捧著星光 -->
                        <circle cx="50" cy="65" r="6" fill="#FFE4C4" />
-                       <!-- 星星 -->
                        <path d="M50 58 L 51.5 61 L 54 61 L 52 63 L 53 66 L 50 64 L 47 66 L 48 63 L 46 61 L 48.5 61 Z" fill="#FFF" stroke="#FCD34D" stroke-width="0.5" class="animate-pulse" />
                    </svg>
                 </div>
@@ -219,17 +221,13 @@
 
         <!-- 戳戳樂區域 -->
         <div class="relative z-10 flex-grow flex flex-col items-center justify-center w-full py-4 px-6">
-            
-            <!-- 網格容器 -->
             <div id="poke-grid" class="poke-grid">
-                <!-- JS 將在此生成 12 個格子 -->
+                <!-- JS 生成 -->
             </div>
-
         </div>
 
         <!-- 底部按鈕區域 -->
         <div class="w-full relative z-20 mb-8 px-6 shrink-0">
-            
             <!-- 重置按鈕 -->
             <button id="reset-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-base tracking-wide shadow-[0_0_20px_rgba(147,51,234,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] transform active:scale-95 transition-all flex items-center justify-center gap-2 group border border-white/20 relative z-30 cursor-pointer">
                 <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-500 text-yellow-300"></i>
@@ -255,7 +253,7 @@
             </p>
         </div>
 
-        <!-- 結果彈窗 -->
+        <!-- 結果彈窗 Modal -->
         <div id="result-modal" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
             <div class="w-full max-w-sm bg-[#1E1B2E] border border-purple-500/40 rounded-2xl p-5 shadow-[0_0_50px_rgba(139,92,246,0.3)] relative transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh]" id="modal-content">
                 
@@ -266,7 +264,6 @@
                 <div class="text-center overflow-y-auto pt-2" style="scrollbar-width: none; -ms-overflow-style: none;">
                     <div class="text-purple-400 text-[10px] font-bold tracking-[0.2em] uppercase mb-3 opacity-80">Message from Angels</div>
                     
-                    <!-- 天使數字展示 -->
                     <div class="mb-5 relative">
                         <div class="absolute inset-0 bg-purple-500/20 blur-2xl rounded-full animate-pulse-slow"></div>
                         <h2 id="angel-number" class="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-purple-200 relative z-10 font-sans tracking-widest" style="filter: drop-shadow(0 0 10px rgba(168,85,247,0.5));">
@@ -325,84 +322,84 @@
 
         const angelData = [
             { 
-                id: 0, icon: "shirt", color: "#FCA5A5", number: "731", 
+                id: 0, number: "731", 
                 title: "釋放「對完美的執著」", 
                 code: "選擇充滿愛的想法。", 
                 whisper: "你的靈魂已經夠好了。731 提醒你，放下那些嚴厲的自我批判，選擇用更溫柔的視角看待自己。不完美也是一種美，請允許自己真實地存在。",
                 action: "整理一個抽屜，不需要做到100分，只要比原本整齊就好。"
             },
             { 
-                id: 1, icon: "clock-3", color: "#FDBA74", number: "321", 
+                id: 1, number: "321", 
                 title: "釋放「對過去的懊悔」", 
                 code: "把恐懼交給揚昇大師，重新開始。", 
                 whisper: "就像倒數計時一樣，321 代表過去已經結束了。請將那些「早知道」的遺憾交託給宇宙，你現在擁有的是一張全新的白紙，準備書寫新的篇章。",
                 action: "找出一件讓你觸景傷情或已經不用的舊物，勇敢地把它丟掉。"
             },
             { 
-                id: 2, icon: "heart-handshake", color: "#FDE047", number: "615", 
+                id: 2, number: "615", 
                 title: "釋放「討好他人的委屈」", 
                 code: "接受新的改變，誠實面對自己。", 
                 whisper: "你不需要透過討好來換取價值。615 鼓勵你誠實面對內心的需求，當你開始愛自己，周圍的人際關係也會隨之改變，變得更健康、更真實。",
                 action: "今天試著對一個你不喜歡的請求說「不」，或是刪除一個讓你感到壓力的聯絡人。"
             },
             { 
-                id: 3, icon: "coins", color: "#86EFAC", number: "818", 
+                id: 3, number: "818", 
                 title: "釋放「對金錢的匱乏恐懼」", 
                 code: "財務療癒，正向的豐盛之流。", 
                 whisper: "你的擔憂正在阻礙豐盛的進入。818 是一個強效的顯化數字，告訴你只要保持正向信念，宇宙的資源正在透過各種管道流向你，請安心接收。",
                 action: "把錢包裡的所有發票、收據拿出來整理，並把鈔票按順序整齊放好。"
             },
             { 
-                id: 4, icon: "flame", color: "#93C5FD", number: "924", 
+                id: 4, number: "924", 
                 title: "釋放「無法原諒的憤怒」", 
                 code: "保持信念，天使正在協助你療癒。", 
                 whisper: "憤怒是因為受了傷。924 帶來溫和的療癒能量，天使正圍繞著你，協助你鬆開緊抓傷痛的手。原諒不是為了對方，而是為了讓你重獲自由。",
                 action: "拿一張白紙，用力寫下你的憤怒，然後把它撕碎丟進垃圾桶。"
             },
             { 
-                id: 5, icon: "compass", color: "#C4B5FD", number: "123", 
+                id: 5, number: "123", 
                 title: "釋放「對未知的焦慮與控制」", 
                 code: "簡化生活，放下重擔。", 
                 whisper: "你不需要看清整座樓梯。123 是最簡單的階梯數字，提醒你「一次只走一步」。放下對未來的過度預設，把生活變簡單，最好的安排自然會發生。",
                 action: "只清理房間的一個小角落或桌面，專注在眼前的這一小塊整潔。"
             },
             { 
-                id: 6, icon: "user-x", color: "#F9A8D4", number: "411", 
+                id: 6, number: "411", 
                 title: "釋放「我不夠好的限制性信念」", 
                 code: "專注於你想要的，天使與你同在。", 
                 whisper: "不要再貶低自己了。411 是一個警告也是祝福，提醒你遠離負面自我對話。你是被天使深愛著的，請看見自己身上那些閃閃發光的天賦。",
                 action: "去擦亮一面鏡子，看著鏡中的自己，並對自己微笑五秒鐘。"
             },
             { 
-                id: 7, icon: "users", color: "#FDA4AF", number: "619", 
+                id: 7, number: "619", 
                 title: "釋放「與他人比較的嫉妒」", 
                 code: "專注於你的靈魂使命，物質將被供應。", 
                 whisper: "每個人的劇本都不同。619 提醒你，當你專注於自己的熱情與使命時，你就是獨一無二的。無需羨慕別人的花園，你的果實正在成熟中。",
                 action: "退追蹤或隱藏一個社群媒體上讓你感到自卑或嫉妒的帳號。"
             },
             { 
-                id: 8, icon: "cloud-rain", color: "#A5F3FC", number: "909", 
+                id: 8, number: "909", 
                 title: "釋放「壓抑已久的悲傷」", 
                 code: "神聖的轉折點，讓舊的離去。", 
                 whisper: "悲傷是重生的雨水。909 象徵一個週期的結束。允許自己大哭一場，將那些壓抑的情緒隨著冬至的黑夜流走，黎明時，你將煥然一新。",
                 action: "好好洗一個熱水澡，想像水流沖走身上所有的沉重與悲傷。"
             },
             { 
-                id: 9, icon: "shield-alert", color: "#D8B4FE", number: "101", 
+                id: 9, number: "101", 
                 title: "釋放「受害者模式的無力感」", 
                 code: "讓神接手（Let Go and Let God）。", 
                 whisper: "你擁有創造實相的力量。101 是一個強大的開關，提醒你隨時可以切換頻道。你不是無助的，只要改變一個念頭，你就能拿回生命的主導權。",
                 action: "清洗或更換你的床單枕套，象徵為自己創造一個全新的能量場。"
             },
             { 
-                id: 10, icon: "smile", color: "#F0ABFC", number: "528", 
+                id: 10, number: "528", 
                 title: "釋放「對身體外貌的批判」", 
                 code: "奇蹟音頻，愛與DNA修復。", 
                 whisper: "你的身體是靈魂神聖的載體。528 被稱為「愛的頻率」，請用這個數字的能量祝福你的每一個細胞，感謝身體多年來的支撐與陪伴。",
                 action: "丟掉一瓶過期的保養品，或是一件已經不合身、穿了不舒服的衣服。"
             },
             { 
-                id: 11, icon: "backpack", color: "#67E8F9", number: "717", 
+                id: 11, number: "717", 
                 title: "釋放「不屬於你的責任」", 
                 code: "你在正確的道路上，繼續保持。", 
                 whisper: "你背負了太多別人的課題。717 告訴你，當你設立健康的界線，回歸自己的中心時，這才是最正確的道路。交還責任，是對彼此靈魂最大的尊重。",
@@ -421,148 +418,4 @@
             star.style.left = Math.random() * 100 + '%';
             star.style.opacity = Math.random() * 0.7;
             star.style.animationDelay = Math.random() * 5 + 's';
-            star.style.animationDuration = Math.random() * 3 + 2 + 's';
-            starsContainer.appendChild(star);
-        }
-
-        // 音效
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playTearSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            try {
-                // 白噪音模擬撕紙
-                const bufferSize = audioCtx.sampleRate * 0.5; // 0.5 sec
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
-
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'highpass';
-                filter.frequency.value = 1000;
-
-                const gain = audioCtx.createGain();
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-
-                noise.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                noise.start();
-            } catch(e) { console.log('Audio error'); }
-        }
-
-        function playWinSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
-                
-                osc.start();
-                osc.stop(audioCtx.currentTime + 1.5);
-            } catch(e) {}
-        }
-
-        // 生成戳戳樂格子
-        const gridContainer = document.getElementById('poke-grid');
-        
-        function initGrid() {
-            gridContainer.innerHTML = '';
-            // 隨機打亂資料
-            const shuffledData = [...angelData].sort(() => Math.random() - 0.5);
-            
-            shuffledData.forEach((item, index) => {
-                const cell = document.createElement('div');
-                cell.className = 'poke-cell';
-                cell.innerHTML = `
-                    <div class="poke-hole">
-                        <div class="poke-content">${item.number}</div>
-                    </div>
-                    <div class="poke-paper" data-n="${index + 1}"></div>
-                `;
-                
-                // 點擊事件
-                cell.addEventListener('click', function() {
-                    if (this.classList.contains('broken')) return; // 已經戳過
-                    
-                    playTearSound();
-                    this.classList.add('broken');
-                    
-                    // 延遲顯示彈窗
-                    setTimeout(() => {
-                        playWinSound();
-                        showResult(item);
-                    }, 600);
-                });
-                
-                gridContainer.appendChild(cell);
-            });
-        }
-        
-        initGrid();
-
-        // 重新洗牌
-        const resetBtn = document.getElementById('reset-btn');
-        resetBtn.addEventListener('click', () => {
-            initGrid();
-        });
-
-        // 彈窗邏輯
-        const resultModal = document.getElementById('result-modal');
-        const modalContent = document.getElementById('modal-content');
-        const closeModal = document.getElementById('close-modal');
-        const backBtn = document.getElementById('back-btn');
-
-        function showResult(result) {
-            document.getElementById('angel-number').textContent = result.number;
-            document.getElementById('task-title').textContent = result.title;
-            document.getElementById('frequency-code').textContent = result.code;
-            document.getElementById('angel-whisper').textContent = result.whisper;
-            document.getElementById('declutter-action').textContent = result.action;
-
-            resultModal.classList.remove('hidden');
-            void resultModal.offsetWidth;
-            resultModal.classList.remove('opacity-0');
-            modalContent.classList.remove('scale-95');
-            modalContent.classList.add('scale-100');
-        }
-
-        function hideModal() {
-            resultModal.classList.add('opacity-0');
-            modalContent.classList.remove('scale-100');
-            modalContent.classList.add('scale-95');
-            setTimeout(() => {
-                resultModal.classList.add('hidden');
-            }, 300);
-        }
-
-        closeModal.addEventListener('click', hideModal);
-        backBtn.addEventListener('click', hideModal); // 新增的返回按鈕事件
-        resultModal.addEventListener('click', (e) => {
-            if (e.target === resultModal) hideModal();
-        });
-
-        // 解鎖音效
-        document.body.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }, { once: true });
-
-    </script>
-</body>
-</html>
-
-
+            star.style.animation
