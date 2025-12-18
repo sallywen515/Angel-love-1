@@ -21,6 +21,7 @@
             touch-action: manipulation;
             margin: 0;
             padding: 0;
+            padding-bottom: 80px; /* 預留底部空間給播放器 */
         }
 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -50,7 +51,7 @@
             transform: scale(0.95);
         }
 
-        /* 封印紙 (未戳破) */
+        /* 封印紙 */
         .poke-paper {
             position: absolute;
             inset: 0;
@@ -132,21 +133,50 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        /* 音樂提示淡出 */
-        .fade-out {
-            opacity: 0;
-            transition: opacity 1s ease-out;
-            pointer-events: none;
+        /* --- YouTube 播放器樣式 --- */
+        .yt-player-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #1E1B2E;
+            border-top: 1px solid rgba(139, 92, 246, 0.3);
+            z-index: 100;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+        }
+
+        .yt-player-container.minimized {
+            transform: translateY(calc(100% - 44px)); /* 只露出標題列 */
+        }
+
+        .yt-header {
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            background: rgba(139, 92, 246, 0.1);
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+
+        .yt-content {
+            width: 100%;
+            height: 200px; /* 影片高度 */
+            background: #000;
+        }
+
+        /* 隱藏原生捲軸但保留功能 */
+        .yt-player-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
 
     </style>
 </head>
 <body class="flex justify-center min-h-screen bg-black">
-
-    <!-- 背景音樂 (使用穩定的 Wikimedia Commons 來源: Kevin MacLeod - Windswept) -->
-    <audio id="bg-music" loop>
-        <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/d/d6/Windswept.ogg/Windswept.ogg.mp3" type="audio/mpeg">
-    </audio>
 
     <!-- 主容器 -->
     <div class="w-full max-w-[430px] min-h-screen bg-[#0F0518] shadow-2xl relative flex flex-col">
@@ -159,16 +189,11 @@
             <div class="absolute top-[40%] left-[30%] w-[200px] h-[200px] bg-[#EC4899] rounded-full mix-blend-screen filter blur-[70px] opacity-20"></div>
         </div>
 
-        <!-- 音樂提示 (首次進入顯示) -->
-        <div id="music-hint" class="absolute top-16 right-4 z-40 text-xs text-purple-200/70 animate-pulse pointer-events-none">
-            點擊畫面開啟音樂 🎵
-        </div>
-
-        <!-- 音樂與音效開關 -->
-        <div class="absolute top-4 right-4 z-50 flex gap-2">
-            <button id="music-btn" class="p-2 rounded-full bg-white/10 text-purple-200 border border-purple-500/30 hover:bg-white/20 transition-colors shadow-sm cursor-pointer">
-                <i data-lucide="music" class="w-5 h-5 hidden" id="music-icon-on"></i>
-                <i data-lucide="music-2" class="w-5 h-5" id="music-icon-off"></i>
+        <!-- 音效開關 (保留戳紙聲) -->
+        <div class="absolute top-4 right-4 z-50">
+            <button id="sound-btn" class="p-2 rounded-full bg-white/10 text-purple-200 border border-purple-500/30 hover:bg-white/20 transition-colors shadow-sm cursor-pointer" title="開啟/關閉音效">
+                <i data-lucide="volume-2" class="w-5 h-5" id="sound-icon-on"></i>
+                <i data-lucide="volume-x" class="w-5 h-5 hidden" id="sound-icon-off"></i>
             </button>
         </div>
 
@@ -234,28 +259,14 @@
                 <span id="btn-text">重新佈置星空 (洗牌)</span>
             </button>
             
-            <!-- 圖片連結區 -->
-            <div class="mt-6 flex justify-center relative">
-                <a href="https://reurl.cc/Abb823" target="_blank" class="flex items-center gap-3 bg-white/5 hover:bg-white/10 px-4 py-3 rounded-lg border border-purple-500/30 transition-all group backdrop-blur-sm w-full max-w-[280px] shadow-lg">
-                    <div class="w-12 h-12 bg-indigo-900/50 rounded-full overflow-hidden border border-purple-400/50 flex items-center justify-center shrink-0 shadow-inner p-2">
-                        <i data-lucide="users" class="w-full h-full text-purple-200"></i>
-                    </div>
-                    <div class="text-left flex-grow">
-                        <div class="text-[10px] text-purple-300 tracking-wider font-bold mb-0.5">WELCOME</div>
-                        <div class="text-xs text-purple-100 group-hover:text-white transition-colors tracking-wide font-medium">歡迎加入天使之愛魔法樂生活</div>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 group-hover:text-white transition-colors"></i>
-                </a>
-            </div>
-
-            <p class="text-center text-purple-400/40 text-[10px] mt-4">
+            <p class="text-center text-purple-400/40 text-[10px] mt-4 mb-8">
                 天使之愛魔法樂生活團隊 製作
             </p>
         </div>
 
         <!-- 結果彈窗 Modal -->
-        <div id="result-modal" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
-            <div class="w-full max-w-sm bg-[#1E1B2E] border border-purple-500/40 rounded-2xl p-5 shadow-[0_0_50px_rgba(139,92,246,0.3)] relative transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh]" id="modal-content">
+        <div id="result-modal" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300 pb-32">
+            <div class="w-full max-w-sm bg-[#1E1B2E] border border-purple-500/40 rounded-2xl p-5 shadow-[0_0_50px_rgba(139,92,246,0.3)] relative transform scale-95 transition-transform duration-300 flex flex-col max-h-[75vh]" id="modal-content">
                 
                 <button id="close-modal" class="absolute top-3 right-3 text-purple-300 hover:text-white transition-colors z-10 p-1">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -314,6 +325,30 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- YouTube 播放器 Widget -->
+    <div id="yt-player-container" class="yt-player-container">
+        <!-- 標題列 (點擊可縮放) -->
+        <div id="yt-header" class="yt-header">
+            <div class="flex items-center gap-2 text-purple-200">
+                <i data-lucide="music" class="w-4 h-4 animate-pulse"></i>
+                <span class="text-sm tracking-widest font-medium">療癒背景音樂</span>
+            </div>
+            <button id="yt-toggle" class="text-purple-300 hover:text-white transition-colors p-1">
+                <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300" id="toggle-icon"></i>
+            </button>
+        </div>
+        <!-- 影片內容 -->
+        <div class="yt-content bg-black">
+            <!-- 嵌入 YouTube 影片: 自動播放, 循環, 隱藏控制項 -->
+            <iframe 
+                src="https://www.youtube.com/embed/ECdcl-SHwSE?autoplay=1&loop=1&playlist=ECdcl-SHwSE&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1" 
+                title="Healing Music"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        </div>
     </div>
 
     <!-- 腳本 -->
@@ -422,40 +457,19 @@
             starsContainer.appendChild(star);
         }
 
-        // 音樂與音效控制
-        const musicBtn = document.getElementById('music-btn');
-        const musicIconOn = document.getElementById('music-icon-on');
-        const musicIconOff = document.getElementById('music-icon-off');
-        const bgMusic = document.getElementById('bg-music');
-        let isMusicPlaying = false;
+        // 音效控制 (戳紙聲)
+        const soundBtn = document.getElementById('sound-btn');
+        const soundIconOn = document.getElementById('sound-icon-on');
+        const soundIconOff = document.getElementById('sound-icon-off');
+        let soundEnabled = true;
 
-        // 設定音量
-        bgMusic.volume = 0.4;
-
-        function toggleMusic() {
-            if (bgMusic.paused) {
-                bgMusic.play().then(() => {
-                    isMusicPlaying = true;
-                    musicIconOn.classList.remove('hidden');
-                    musicIconOff.classList.add('hidden');
-                }).catch(e => console.log('Auto-play blocked'));
-            } else {
-                bgMusic.pause();
-                isMusicPlaying = false;
-                musicIconOn.classList.add('hidden');
-                musicIconOff.classList.remove('hidden');
-            }
-        }
-        musicBtn.addEventListener('click', toggleMusic);
-
-        // 音效上下文
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playTearSound() {
+            if (!soundEnabled) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
             try {
-                // 白噪音模擬撕紙
-                const bufferSize = audioCtx.sampleRate * 0.5; // 0.5 sec
+                const bufferSize = audioCtx.sampleRate * 0.5; 
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
@@ -482,6 +496,7 @@
         }
 
         function playWinSound() {
+            if (!soundEnabled) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
             try {
                 const osc = audioCtx.createOscillator();
@@ -505,7 +520,6 @@
         
         function initGrid() {
             gridContainer.innerHTML = '';
-            // 隨機打亂資料
             const shuffledData = [...angelData].sort(() => Math.random() - 0.5);
             
             shuffledData.forEach((item, index) => {
@@ -518,14 +532,12 @@
                     <div class="poke-paper" data-n="${index + 1}"></div>
                 `;
                 
-                // 點擊事件
                 cell.addEventListener('click', function() {
-                    if (this.classList.contains('broken')) return; // 已經戳過
+                    if (this.classList.contains('broken')) return;
                     
                     playTearSound();
                     this.classList.add('broken');
                     
-                    // 延遲顯示彈窗
                     setTimeout(() => {
                         playWinSound();
                         showResult(item);
@@ -538,7 +550,6 @@
         
         initGrid();
 
-        // 重新洗牌
         const resetBtn = document.getElementById('reset-btn');
         resetBtn.addEventListener('click', () => {
             initGrid();
@@ -574,25 +585,39 @@
         }
 
         closeModal.addEventListener('click', hideModal);
-        backBtn.addEventListener('click', hideModal); // 新增的返回按鈕事件
+        backBtn.addEventListener('click', hideModal);
         resultModal.addEventListener('click', (e) => {
             if (e.target === resultModal) hideModal();
         });
 
-        // 點擊解鎖音效與音樂 (修復自動播放)
-        document.body.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (bgMusic.paused && isMusicPlaying === false) { 
-                bgMusic.play().then(() => {
-                    isMusicPlaying = true;
-                    musicIconOn.classList.remove('hidden');
-                    musicIconOff.classList.add('hidden');
-                    // 移除提示
-                    const hint = document.getElementById('music-hint');
-                    if(hint) hint.classList.add('fade-out');
-                }).catch(() => {});
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            if(soundEnabled) {
+                soundIconOn.classList.remove('hidden');
+                soundIconOff.classList.add('hidden');
+            } else {
+                soundIconOn.classList.add('hidden');
+                soundIconOff.classList.remove('hidden');
             }
-        }, { once: true });
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        });
+
+        // YouTube 播放器 Widget 邏輯
+        const ytHeader = document.getElementById('yt-header');
+        const ytContainer = document.getElementById('yt-player-container');
+        const toggleIcon = document.getElementById('toggle-icon');
+        let isMinimized = false;
+
+        ytHeader.addEventListener('click', () => {
+            isMinimized = !isMinimized;
+            if (isMinimized) {
+                ytContainer.classList.add('minimized');
+                toggleIcon.classList.add('rotate-180');
+            } else {
+                ytContainer.classList.remove('minimized');
+                toggleIcon.classList.remove('rotate-180');
+            }
+        });
 
     </script>
 </body>
