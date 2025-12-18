@@ -418,4 +418,184 @@
             star.style.left = Math.random() * 100 + '%';
             star.style.opacity = Math.random() * 0.7;
             star.style.animationDelay = Math.random() * 5 + 's';
-            star.style.animation
+            star.style.animationDuration = Math.random() * 3 + 2 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // 音樂與音效控制
+        const musicBtn = document.getElementById('music-btn');
+        const musicIconOn = document.getElementById('music-icon-on');
+        const musicIconOff = document.getElementById('music-icon-off');
+        const bgMusic = document.getElementById('bg-music');
+        let isMusicPlaying = false;
+
+        // 設定音量
+        bgMusic.volume = 0.4;
+
+        function toggleMusic() {
+            if (bgMusic.paused) {
+                bgMusic.play().then(() => {
+                    isMusicPlaying = true;
+                    musicIconOn.classList.remove('hidden');
+                    musicIconOff.classList.add('hidden');
+                }).catch(e => console.log('Auto-play blocked'));
+            } else {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicIconOn.classList.add('hidden');
+                musicIconOff.classList.remove('hidden');
+            }
+        }
+        musicBtn.addEventListener('click', toggleMusic);
+
+        // 音效上下文
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTearSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                // 白噪音模擬撕紙
+                const bufferSize = audioCtx.sampleRate * 0.5; // 0.5 sec
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 1000;
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                noise.start();
+            } catch(e) { console.log('Audio error'); }
+        }
+
+        function playWinSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1.5);
+            } catch(e) {}
+        }
+
+        // 生成戳戳樂格子
+        const gridContainer = document.getElementById('poke-grid');
+        
+        function initGrid() {
+            gridContainer.innerHTML = '';
+            // 隨機打亂資料
+            const shuffledData = [...angelData].sort(() => Math.random() - 0.5);
+            
+            shuffledData.forEach((item, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'poke-cell';
+                cell.innerHTML = `
+                    <div class="poke-hole">
+                        <div class="poke-content">${item.number}</div>
+                    </div>
+                    <div class="poke-paper" data-n="${index + 1}"></div>
+                `;
+                
+                // 點擊事件
+                cell.addEventListener('click', function() {
+                    if (this.classList.contains('broken')) return; // 已經戳過
+                    
+                    playTearSound();
+                    this.classList.add('broken');
+                    
+                    // 延遲顯示彈窗
+                    setTimeout(() => {
+                        playWinSound();
+                        showResult(item);
+                    }, 600);
+                });
+                
+                gridContainer.appendChild(cell);
+            });
+        }
+        
+        initGrid();
+
+        // 重新洗牌
+        const resetBtn = document.getElementById('reset-btn');
+        resetBtn.addEventListener('click', () => {
+            initGrid();
+        });
+
+        // 彈窗邏輯
+        const resultModal = document.getElementById('result-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeModal = document.getElementById('close-modal');
+        const backBtn = document.getElementById('back-btn');
+
+        function showResult(result) {
+            document.getElementById('angel-number').textContent = result.number;
+            document.getElementById('task-title').textContent = result.title;
+            document.getElementById('frequency-code').textContent = result.code;
+            document.getElementById('angel-whisper').textContent = result.whisper;
+            document.getElementById('declutter-action').textContent = result.action;
+
+            resultModal.classList.remove('hidden');
+            void resultModal.offsetWidth;
+            resultModal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }
+
+        function hideModal() {
+            resultModal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                resultModal.classList.add('hidden');
+            }, 300);
+        }
+
+        closeModal.addEventListener('click', hideModal);
+        backBtn.addEventListener('click', hideModal); // 新增的返回按鈕事件
+        resultModal.addEventListener('click', (e) => {
+            if (e.target === resultModal) hideModal();
+        });
+
+        // 點擊解鎖音效與音樂 (修復自動播放)
+        document.body.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (bgMusic.paused && isMusicPlaying === false) { 
+                bgMusic.play().then(() => {
+                    isMusicPlaying = true;
+                    musicIconOn.classList.remove('hidden');
+                    musicIconOff.classList.add('hidden');
+                    // 移除提示
+                    const hint = document.getElementById('music-hint');
+                    if(hint) hint.classList.add('fade-out');
+                }).catch(() => {});
+            }
+        }, { once: true });
+
+    </script>
+</body>
+</html>
+
+
